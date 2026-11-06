@@ -4,20 +4,18 @@ Code for **Focus-KV**, a static head-wise KV-cache compression method that alloc
 
 ## Method
 
-The following presents Section 4 of the paper, with equations reformatted for GitHub and minor copy edits. Section numbers follow the paper; appendix references refer to the paper.
-
 Motivated by the observation that reasoning ability is concentrated in a sparse subset of attention heads, we propose **Focus-KV**, a static head-wise KV-cache compression algorithm. Focus-KV improves the model's reasoning ability by assigning non-uniform cache budgets across KV heads. Using the importance signal obtained from the probe set, Focus-KV uses a balanced allocation rule with an explicit budget floor and budget cap, ensuring that reasoning-critical heads receive more cache capacity while other heads still retain sufficient budget to keep their basic functionality. By shifting more cache budget toward reasoning-critical heads, Focus-KV improves reasoning performance under the same overall memory constraint.
 
-**Notation.** We write $`S`$ for the probe set, $`\bar{B}`$ for the average per-head KV budget, $`w`$ for the local-window size, $`\rho\in(0,1)`$ for the uniform-floor ratio, $`\kappa>1`$ for the max-budget cap multiplier, and $`\lambda`$ for the attention/similarity mixing weight. We use $`L`$ for the number of decoder layers, $`H_q`$ for query heads per layer, and $`H_{kv}`$ for KV heads per layer, with GQA grouping $`G=H_q/H_{kv}`$. A full notation table is given in Appendix A.1 of the paper.
+**Notation.** We write $`S`$ for the probe set, $`\bar{B}`$ for the average per-head KV budget, $`w`$ for the local-window size, $`\rho\in(0,1)`$ for the uniform-floor ratio, $`\kappa>1`$ for the max-budget cap multiplier, and $`\lambda`$ for the attention/similarity mixing weight. We use $`L`$ for the number of decoder layers, $`H_q`$ for query heads per layer, and $`H_{kv}`$ for KV heads per layer, with GQA grouping $`G=H_q/H_{kv}`$.
 
 Focus-KV consists of four steps:
 
-1. Constructing a high-quality probe set (Section 4.1).
-2. Estimating the contribution of each query head to reasoning tasks (Section 4.2).
-3. Converting the head importance signal into a balanced KV-head budget allocation (Section 4.3).
-4. Compressing the KV cache using the allocated head-wise budget, which is computed before inference and fixed during decoding (Section 4.4).
+1. [Construct a high-quality probe set.](#probe-set-construction)
+2. [Estimate the contribution of each query head to reasoning tasks.](#importance-signal-via-causal-ablation)
+3. [Convert head importance into a balanced KV-head budget allocation.](#budget-allocation)
+4. [Compress the KV cache using the allocated head-wise budgets, computed before inference and fixed during decoding.](#kv-cache-compression)
 
-### 4.1 Probe Set Construction
+### Probe Set Construction
 
 We construct the probe set $`S`$ from OpenR1-Math-220K (Hugging Face, 2025). First, we apply data cleaning to retain usable samples. Then, for each remaining sample, we compute two metrics: (a) the average length of the `<think>...</think>` reasoning trace and (b) the per-sample difficulty, defined as
 
@@ -33,7 +31,7 @@ $$
 
 selects the top 100 samples: long, hard reasoning problems that can effectively reflect the model's reasoning ability.
 
-### 4.2 Importance Signal via Causal Ablation
+### Importance Signal via Causal Ablation
 
 Given the probe set, we estimate the importance of each query head by measuring how much the model's next-token prediction loss changes when that head is disabled. First, we perform a forward-pass evaluation on the probe set and compute the next-token cross-entropy loss, denoted as $`\mathcal{L}_{\mathrm{baseline}}`$, which serves as the baseline measure of the model's basic reasoning performance. Then, for each query head at position $`(k,h)`$, we scale the output of that query head by $`\varepsilon=10^{-9}`$ to disable it and compute the next-token cross-entropy loss again, denoted as $`\mathcal{L}_{\mathrm{ablation}}(k,h)`$. This query head's importance is defined as
 
@@ -43,7 +41,7 @@ $$
 
 This score has a direct causal interpretation: if disabling a head causes a large increase in next-token cross-entropy, then the head contributes substantially to the model's reasoning trajectory; if the loss change is close to zero, then this head is much less important for the reasoning task.
 
-### 4.3 Budget Allocation
+### Budget Allocation
 
 For models using GQA, each KV head corresponds to $`G`$ query heads. We take the maximum importance score among these query heads as the importance of the KV head, denoted as $`I_{kv}(k,p)`$, where $`p`$ denotes the position of the KV head in layer $`k`$:
 
@@ -64,7 +62,7 @@ B(k,p)=w+\underbrace{\rho(\bar{B}-w)}_{\text{uniform floor }U}+r(k,p),
 \tag{1}
 $$
 
-where $`r(k,p)\geq 0`$ denotes the extra reward budget for reasoning contribution. In the allocation rule (see Appendix A.4 of the paper for details), let
+where $`r(k,p)\geq 0`$ denotes the extra reward budget for reasoning contribution. To allocate this extra budget, define
 
 $$
 P\triangleq B_{\mathrm{total}}-LH_{kv}(w+U),\qquad M\triangleq\kappa\bar{B}-w-U,
@@ -101,7 +99,7 @@ $$
 \tag{2}
 $$
 
-### 4.4 KV Cache Compression
+### KV Cache Compression
 
 At inference time, Focus-KV reuses the R-KV scoring step (Cai et al., 2026) to evict tokens. For each compression event, each KV head $`p`$, and each cached position $`t`$, we score
 
@@ -122,12 +120,10 @@ where $`\operatorname{sim}_p(t)`$ is the row-mean cosine similarity of position 
 | [`monkeypatch.py`](monkeypatch.py) | Entry points for patching Llama, Qwen2, and Qwen3. |
 | [`utils.py`](utils.py) | Attention-score, similarity, and supporting utilities. |
 | [`probeset/find_reasoning_heads_multigpu.py`](probeset/find_reasoning_heads_multigpu.py) | Multi-GPU query-head ablation and importance profiling. |
-| [`probeset/probeset.jsonl`](probeset/probeset.jsonl) | Probe data containing 300 records; Section 4.1 describes the paper's 100-sample selection. |
+| [`probeset/probeset.jsonl`](probeset/probeset.jsonl) | Probe data containing 300 records; the [probe-set construction](#probe-set-construction) procedure selects 100 samples for profiling. |
 | [`head_importance/`](head_importance/) | Precomputed query-head importance profiles for Qwen3-8B, Qwen3-14B, and DeepSeek-R1-Distill-Llama-8B. |
 
 ## References
-
-The following references are cited in the method description; bibliographic details follow the paper.
 
 - Hugging Face (2025). [*Open R1: A Fully Open Reproduction of DeepSeek-R1.*](https://github.com/huggingface/open-r1)
 - Cehao Yang et al. (2025b). [*Select2Reason: Efficient Instruction-Tuning Data Selection for Long-CoT Reasoning.*](https://arxiv.org/abs/2505.17266)
