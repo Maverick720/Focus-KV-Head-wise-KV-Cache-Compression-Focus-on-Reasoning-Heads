@@ -104,11 +104,11 @@ $$
 At inference time, Focus-KV reuses the R-KV scoring step (Cai et al., 2026) to evict tokens. For each compression event, each KV head $`p`$, and each cached position $`t`$, we score
 
 $$
-s_p(t)=\lambda\cdot\operatorname{maxpool}_k\left(\operatorname{softmax}\left(QK^\top/\sqrt{d}\right)_p\right)[t]-(1-\lambda)\cdot\operatorname{sim}_p(t),
+s_p(t)=\lambda\cdot\mathrm{maxpool}_k\left(\mathrm{softmax}\left(QK^\top/\sqrt{d}\right)_p\right)[t]-(1-\lambda)\cdot\mathrm{sim}_p(t),
 \tag{3}
 $$
 
-where $`\operatorname{sim}_p(t)`$ is the row-mean cosine similarity of position $`t`$'s key to the rest of the cache. We keep the top $`B(k,p)-w`$ positions and the last $`w`$ positions.
+where $`\mathrm{sim}_p(t)`$ is the row-mean cosine similarity of position $`t`$'s key to the rest of the cache. We keep the top $`B(k,p)-w`$ positions and the last $`w`$ positions.
 
 ## Repository Structure
 
