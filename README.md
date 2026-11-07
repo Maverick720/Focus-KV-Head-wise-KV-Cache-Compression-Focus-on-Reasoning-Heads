@@ -110,6 +110,20 @@ $$
 
 where $`\mathrm{sim}_p(t)`$ is the row-mean cosine similarity of position $`t`$'s key to the rest of the cache. We keep the top $`B(k,p)-w`$ positions and the last $`w`$ positions.
 
+## Experiment Results
+
+### Mathematical Reasoning
+
+![Figure 4: Accuracy across KV-cache budgets on MATH-500 and AIME24 for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/figure4.png)
+
+**Figure 4.** Focus-KV compared with R-KV, ReasonAlloc, Ada-KV, and Full-KV on MATH-500 and AIME24. Results are reported as pass@1 based on 32 generated responses per question. Focus-KV improves accuracy over R-KV across the evaluated models, with particularly large gains under constrained KV-cache budgets.
+
+### Cross-Domain Reasoning
+
+![Figure 8: Qwen3-14B accuracy across KV-cache budgets on MuSR, LiveCodeBench, ZebraLogic, and SATBench.](assets/figure8.png)
+
+**Figure 8.** Accuracy (%) of Focus-KV, R-KV, ReasonAlloc, and Full-KV on MuSR, LiveCodeBench, ZebraLogic, and SATBench using Qwen3-14B. These results evaluate reasoning performance beyond the mathematical domain used for head-importance profiling.
+
 ## Repository Structure
 
 | Path | Contents |
