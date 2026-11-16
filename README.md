@@ -2,6 +2,18 @@
 
 Code for **Focus-KV**, a static head-wise KV-cache compression method that allocates more cache capacity to attention heads that are important for reasoning. Head importance is estimated offline on a reasoning probe set, and the resulting budgets remain fixed during decoding.
 
+## Observation: The Model's Reasoning Ability Is Concentrated in a Sparse Set of Heads
+
+Do different attention heads contribute equally to a model's reasoning ability? We study the contribution of different attention heads to reasoning and arrive at a clear conclusion: **the model's reasoning ability is highly concentrated in a small number of reasoning-critical heads.** Suppressing these heads causes reasoning performance to drop sharply, whereas suppressing other heads is much less damaging.
+
+We first measure the importance of each query head on a reasoning probe set. The profiling procedure is described in [Importance Signal via Causal Ablation](#importance-signal-via-causal-ablation). As shown in [Figure 1](#importance-signal-via-causal-ablation), reasoning-critical heads are sparse: most heads have importance values close to zero, and only a small number of heads show large importance. This indicates strong non-uniformity across heads.
+
+We further measure how much these reasoning heads contribute to a downstream reasoning task. We evaluate with the R-KV algorithm on MATH-500 using a KV-cache budget of 4096. To disable a query head, we scale the output of that query head by $`\varepsilon`$. We then disable either the most important heads or the least important heads and measure the change in reasoning ability using two metrics: accuracy and average generated tokens. All settings other than the disabled heads are kept the same.
+
+The model's reasoning ability is highly sensitive to important heads. Compared with disabling non-important heads, disabling only a small fraction of important heads causes a much larger accuracy drop and leads the model to generate more tokens.
+
+These results show two facts. First, our importance estimation method can identify reasoning heads. Second, the model's reasoning ability is concentrated in a small number of reasoning-critical heads. This finding drives the core design of Focus-KV: under a fixed budget, allocating more budget to reasoning heads can better preserve the model's reasoning ability.
+
 ## Method
 
 Motivated by the observation that reasoning ability is concentrated in a sparse subset of attention heads, we propose **Focus-KV**, a static head-wise KV-cache compression algorithm. Focus-KV improves the model's reasoning ability by assigning non-uniform cache budgets across KV heads. Using the importance signal obtained from the probe set, Focus-KV uses a balanced allocation rule with an explicit budget floor and budget cap, ensuring that reasoning-critical heads receive more cache capacity while other heads still retain sufficient budget to keep their basic functionality. By shifting more cache budget toward reasoning-critical heads, Focus-KV improves reasoning performance under the same overall memory constraint.
