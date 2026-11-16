@@ -8,15 +8,17 @@ Do different attention heads contribute equally to a model's reasoning ability? 
 
 We first measure the importance of each query head on a reasoning probe set. The profiling procedure is described in [Importance Signal via Causal Ablation](#importance-signal-via-causal-ablation). As shown in [Figure 2](#importance-signal-via-causal-ablation), reasoning-critical heads are sparse: most heads have importance values close to zero, and only a small number of heads show large importance. This indicates strong non-uniformity across heads.
 
-We further measure how much these reasoning heads contribute to a downstream reasoning task. We evaluate with the R-KV algorithm on MATH-500 using a KV-cache budget of 4096. To disable a query head, we scale the output of that query head by $`\varepsilon`$. We then disable either the most important heads or the least important heads and measure the change in reasoning ability using two metrics: accuracy and average generated tokens. All settings other than the disabled heads are kept the same.
+<img src="assets/reasoning_head_ablation.png" alt="Figure 1: Effect of disabling important and non-important query heads on MATH-500 accuracy and average generated tokens for Qwen3-8B and Qwen3-14B." align="right" width="48%">
 
-![Figure 1: Effect of disabling important and non-important query heads on MATH-500 accuracy and average generated tokens for Qwen3-8B and Qwen3-14B.](assets/reasoning_head_ablation.png)
+We further measure how much these reasoning heads contribute to a downstream reasoning task. We evaluate with the R-KV algorithm on MATH-500 using a KV-cache budget of 4096. To disable a query head, we scale the output of that query head by $`\varepsilon`$. We then disable either the most important heads or the least important heads and measure the change in reasoning ability using two metrics: accuracy and average generated tokens. All settings other than the disabled heads are kept the same.
 
 **Figure 1. Reasoning Head Ablation.** Disabling important heads causes a much larger accuracy drop and generates more tokens than disabling non-important heads. Results use R-KV on MATH-500 with a KV-cache budget of 4096.
 
 As shown in Figure 1, the model's reasoning ability is highly sensitive to important heads. Compared with disabling non-important heads, disabling only a small fraction of important heads causes a much larger accuracy drop and leads the model to generate more tokens.
 
 These results show two facts. First, our importance estimation method can identify reasoning heads. Second, the model's reasoning ability is concentrated in a small number of reasoning-critical heads. This finding drives the core design of Focus-KV: under a fixed budget, allocating more budget to reasoning heads can better preserve the model's reasoning ability.
+
+<br clear="all">
 
 ## Method
 
