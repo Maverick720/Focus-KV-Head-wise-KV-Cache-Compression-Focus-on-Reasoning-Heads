@@ -6,11 +6,15 @@ Code for **Focus-KV**, a static head-wise KV-cache compression method that alloc
 
 Do different attention heads contribute equally to a model's reasoning ability? We study the contribution of different attention heads to reasoning and arrive at a clear conclusion: **the model's reasoning ability is highly concentrated in a small number of reasoning-critical heads.** Suppressing these heads causes reasoning performance to drop sharply, whereas suppressing other heads is much less damaging.
 
-We first measure the importance of each query head on a reasoning probe set. The profiling procedure is described in [Importance Signal via Causal Ablation](#importance-signal-via-causal-ablation). As shown in [Figure 1](#importance-signal-via-causal-ablation), reasoning-critical heads are sparse: most heads have importance values close to zero, and only a small number of heads show large importance. This indicates strong non-uniformity across heads.
+We first measure the importance of each query head on a reasoning probe set. The profiling procedure is described in [Importance Signal via Causal Ablation](#importance-signal-via-causal-ablation). As shown in [Figure 2](#importance-signal-via-causal-ablation), reasoning-critical heads are sparse: most heads have importance values close to zero, and only a small number of heads show large importance. This indicates strong non-uniformity across heads.
 
 We further measure how much these reasoning heads contribute to a downstream reasoning task. We evaluate with the R-KV algorithm on MATH-500 using a KV-cache budget of 4096. To disable a query head, we scale the output of that query head by $`\varepsilon`$. We then disable either the most important heads or the least important heads and measure the change in reasoning ability using two metrics: accuracy and average generated tokens. All settings other than the disabled heads are kept the same.
 
-The model's reasoning ability is highly sensitive to important heads. Compared with disabling non-important heads, disabling only a small fraction of important heads causes a much larger accuracy drop and leads the model to generate more tokens.
+![Figure 1: Effect of disabling important and non-important query heads on MATH-500 accuracy and average generated tokens for Qwen3-8B and Qwen3-14B.](assets/reasoning_head_ablation.png)
+
+**Figure 1. Reasoning Head Ablation.** Disabling important heads causes a much larger accuracy drop and generates more tokens than disabling non-important heads. Results use R-KV on MATH-500 with a KV-cache budget of 4096.
+
+As shown in Figure 1, the model's reasoning ability is highly sensitive to important heads. Compared with disabling non-important heads, disabling only a small fraction of important heads causes a much larger accuracy drop and leads the model to generate more tokens.
 
 These results show two facts. First, our importance estimation method can identify reasoning heads. Second, the model's reasoning ability is concentrated in a small number of reasoning-critical heads. This finding drives the core design of Focus-KV: under a fixed budget, allocating more budget to reasoning heads can better preserve the model's reasoning ability.
 
@@ -53,9 +57,9 @@ $$
 
 This score has a direct causal interpretation: if disabling a head causes a large increase in next-token cross-entropy, then the head contributes substantially to the model's reasoning trajectory; if the loss change is close to zero, then this head is much less important for the reasoning task.
 
-![Figure 1: Importance Signal Visualization for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/importance_signal_visualization.png)
+![Figure 2: Importance Signal Visualization for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/importance_signal_visualization.png)
 
-**Figure 1. Importance Signal Visualization.** Per-query-head importance measured on the reasoning probe set for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B. Rows denote layers and columns denote query-head indices. Reasoning-critical heads are sparse: most heads have importance values close to zero, while only a small subset shows high importance.
+**Figure 2. Importance Signal Visualization.** Per-query-head importance measured on the reasoning probe set for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B. Rows denote layers and columns denote query-head indices. Reasoning-critical heads are sparse: most heads have importance values close to zero, while only a small subset shows high importance.
 
 ### Budget Allocation
 
@@ -130,15 +134,15 @@ where $`\mathrm{sim}_p(t)`$ is the row-mean cosine similarity of position $`t`$'
 
 ### Mathematical Reasoning
 
-![Figure 2: Accuracy across KV-cache budgets on MATH-500 and AIME24 for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/figure4.png)
+![Figure 3: Accuracy across KV-cache budgets on MATH-500 and AIME24 for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/figure4.png)
 
-**Figure 2.** Focus-KV compared with R-KV, ReasonAlloc, Ada-KV, and Full-KV on MATH-500 and AIME24. Results are reported as pass@1 based on 32 generated responses per question. Focus-KV improves accuracy over R-KV across the evaluated models, with particularly large gains under constrained KV-cache budgets.
+**Figure 3.** Focus-KV compared with R-KV, ReasonAlloc, Ada-KV, and Full-KV on MATH-500 and AIME24. Results are reported as pass@1 based on 32 generated responses per question. Focus-KV improves accuracy over R-KV across the evaluated models, with particularly large gains under constrained KV-cache budgets.
 
 ### Cross-Domain Reasoning
 
-![Figure 3: Qwen3-14B accuracy across KV-cache budgets on MuSR, LiveCodeBench, ZebraLogic, and SATBench.](assets/figure8.png)
+![Figure 4: Qwen3-14B accuracy across KV-cache budgets on MuSR, LiveCodeBench, ZebraLogic, and SATBench.](assets/figure8.png)
 
-**Figure 3.** Accuracy (%) of Focus-KV, R-KV, ReasonAlloc, and Full-KV on MuSR, LiveCodeBench, ZebraLogic, and SATBench using Qwen3-14B. These results evaluate reasoning performance beyond the mathematical domain used for head-importance profiling.
+**Figure 4.** Accuracy (%) of Focus-KV, R-KV, ReasonAlloc, and Full-KV on MuSR, LiveCodeBench, ZebraLogic, and SATBench using Qwen3-14B. These results evaluate reasoning performance beyond the mathematical domain used for head-importance profiling.
 
 ## Repository Structure
 
