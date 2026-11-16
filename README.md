@@ -41,6 +41,10 @@ $$
 
 This score has a direct causal interpretation: if disabling a head causes a large increase in next-token cross-entropy, then the head contributes substantially to the model's reasoning trajectory; if the loss change is close to zero, then this head is much less important for the reasoning task.
 
+![Figure 1: Importance Signal Visualization for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/importance_signal_visualization.png)
+
+**Figure 1. Importance Signal Visualization.** Per-query-head importance measured on the reasoning probe set for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B. Rows denote layers and columns denote query-head indices. Reasoning-critical heads are sparse: most heads have importance values close to zero, while only a small subset shows high importance.
+
 ### Budget Allocation
 
 For models using GQA, each KV head corresponds to $`G`$ query heads. We take the maximum importance score among these query heads as the importance of the KV head, denoted as $`I_{kv}(k,p)`$, where $`p`$ denotes the position of the KV head in layer $`k`$:
@@ -114,15 +118,15 @@ where $`\mathrm{sim}_p(t)`$ is the row-mean cosine similarity of position $`t`$'
 
 ### Mathematical Reasoning
 
-![Figure 1: Accuracy across KV-cache budgets on MATH-500 and AIME24 for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/figure4.png)
+![Figure 2: Accuracy across KV-cache budgets on MATH-500 and AIME24 for Qwen3-14B, Qwen3-8B, and DeepSeek-R1-Distill-Llama-8B.](assets/figure4.png)
 
-**Figure 1.** Focus-KV compared with R-KV, ReasonAlloc, Ada-KV, and Full-KV on MATH-500 and AIME24. Results are reported as pass@1 based on 32 generated responses per question. Focus-KV improves accuracy over R-KV across the evaluated models, with particularly large gains under constrained KV-cache budgets.
+**Figure 2.** Focus-KV compared with R-KV, ReasonAlloc, Ada-KV, and Full-KV on MATH-500 and AIME24. Results are reported as pass@1 based on 32 generated responses per question. Focus-KV improves accuracy over R-KV across the evaluated models, with particularly large gains under constrained KV-cache budgets.
 
 ### Cross-Domain Reasoning
 
-![Figure 2: Qwen3-14B accuracy across KV-cache budgets on MuSR, LiveCodeBench, ZebraLogic, and SATBench.](assets/figure8.png)
+![Figure 3: Qwen3-14B accuracy across KV-cache budgets on MuSR, LiveCodeBench, ZebraLogic, and SATBench.](assets/figure8.png)
 
-**Figure 2.** Accuracy (%) of Focus-KV, R-KV, ReasonAlloc, and Full-KV on MuSR, LiveCodeBench, ZebraLogic, and SATBench using Qwen3-14B. These results evaluate reasoning performance beyond the mathematical domain used for head-importance profiling.
+**Figure 3.** Accuracy (%) of Focus-KV, R-KV, ReasonAlloc, and Full-KV on MuSR, LiveCodeBench, ZebraLogic, and SATBench using Qwen3-14B. These results evaluate reasoning performance beyond the mathematical domain used for head-importance profiling.
 
 ## Repository Structure
 
